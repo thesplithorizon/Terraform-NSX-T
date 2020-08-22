@@ -1,0 +1,6 @@
+id,display_name,network,next_hop_ip
+1,T1_web_segment,10.150.2.0/24,10.10.10.1
+2,T1_app_segment,10.160.0.0/16,10.10.10.1
+
+
+

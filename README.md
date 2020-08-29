@@ -106,7 +106,7 @@ nsx_password = "VMware1!VMware1!"
 ```
 
 #### static_route.tf
-The `static_route.tfvars` file defined the code to automate the creation of static routes.</br>
+The `static_route.tf` file defined the code to automate the creation of static routes.</br>
 
 ```hcl
 /* 
@@ -619,5 +619,232 @@ nsxt_policy_static_route.staticRoute["1"]: Destruction complete after 1s
 
 Destroy complete! Resources: 5 destroyed.
 ```
+
+
+## 2) Creation of Multiple Logical Segments
+
+This Terraform file required the following, 
+
+- Terraform version `0.13` and above 
+- Terraform `NSX-T Provider`
+
+It make use the [`csvdecode`](https://www.terraform.io/docs/configuration/functions/csvdecode.html) Terraform function.</br>
+
+
+### Files
+Put the following files in the working directory
+
+- `main.tf`
+- `variable.tf`
+- `version.tf`
+- `terraform.tfvars`
+- `logical_segment.tf`
+- `logical_segment.csv`
+
+
+The `main.tf`, `variable.tf`, `version.tf` and `terraform.tfvars` file remain the same. 
+
+#### logical_segment.tf 
+The `logical_segment.tf` file defined the code to automate the creation of logical segment.</br>
+
+```hcl 
+/*
+  Configure multiple NSX-T Segment using CSV file
+*/
+
+# Define Data Source for Tier1 Gateway
+data "nsxt_policy_tier1_gateway" "tenant1-t1-gw" {
+  display_name = "tenant1-t1-gw"
+}
+
+# Define Data Source for Transport Zone
+data "nsxt_policy_transport_zone" "tz-overlay" {
+  display_name = "tz-overlay"
+}
+
+# Import CSV file "segment.csv" in local directory
+# Using csvdecode function
+locals {
+csv_data = file("logical_segment.csv")
+instances = csvdecode(local.csv_data)
+}
+
+
+# Define Resource
+resource "nsxt_policy_segment" "segment" {
+  for_each = { for inst in local.instances : inst.id => inst }
+  display_name = each.value.display_name
+  connectivity_path   = data.nsxt_policy_tier1_gateway.tenant1-t1-gw.path
+  transport_zone_path = data.nsxt_policy_transport_zone.tz-overlay.path
+
+  subnet {
+     # Define Gatewy IP in cidr format
+     cidr =  each.value.cidr
+  }
+
+}
+```
+
+### Terraform Command
+Use the `terraform init` command to  initialize a working directory containing Terraform configuration files.
+Use the `terraform plan` command to create an execution plan and to check if the changes matches your expectations without making any actual changes.
+
+```hcl
+./terraform plan                                                                              
+Refreshing Terraform state in-memory prior to plan...
+The refreshed state will be used to calculate this plan, but will not be
+persisted to local or remote state storage.
+
+data.nsxt_policy_transport_zone.tz-overlay: Refreshing state...
+data.nsxt_policy_tier1_gateway.tenant1-t1-gw: Refreshing state...
+
+------------------------------------------------------------------------
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # nsxt_policy_segment.segment["1"] will be created
+  + resource "nsxt_policy_segment" "segment" {
+      + connectivity_path   = "/infra/tier-1s/tenant1-t1-gw"
+      + display_name        = "web_segment"
+      + id                  = (known after apply)
+      + nsx_id              = (known after apply)
+      + overlay_id          = (known after apply)
+      + path                = (known after apply)
+      + revision            = (known after apply)
+      + transport_zone_path = "/infra/sites/default/enforcement-points/default/transport-zones/7b4a0333-a217-40f8-8e3c-d848d8ff4fdf"
+
+      + subnet {
+          + cidr    = "10.156.1.1/24"
+          + network = (known after apply)
+        }
+    }
+
+  # nsxt_policy_segment.segment["2"] will be created
+  + resource "nsxt_policy_segment" "segment" {
+      + connectivity_path   = "/infra/tier-1s/tenant1-t1-gw"
+      + display_name        = "app_sgement"
+      + id                  = (known after apply)
+      + nsx_id              = (known after apply)
+      + overlay_id          = (known after apply)
+      + path                = (known after apply)
+      + revision            = (known after apply)
+      + transport_zone_path = "/infra/sites/default/enforcement-points/default/transport-zones/7b4a0333-a217-40f8-8e3c-d848d8ff4fdf"
+
+      + subnet {
+          + cidr    = "10.156.2.1/24"
+          + network = (known after apply)
+        }
+    }
+
+  # nsxt_policy_segment.segment["3"] will be created
+  + resource "nsxt_policy_segment" "segment" {
+      + connectivity_path   = "/infra/tier-1s/tenant1-t1-gw"
+      + display_name        = "db_segment"
+      + id                  = (known after apply)
+      + nsx_id              = (known after apply)
+      + overlay_id          = (known after apply)
+      + path                = (known after apply)
+      + revision            = (known after apply)
+      + transport_zone_path = "/infra/sites/default/enforcement-points/default/transport-zones/7b4a0333-a217-40f8-8e3c-d848d8ff4fdf"
+
+      + subnet {
+          + cidr    = "10.156.3.1/24"
+          + network = (known after apply)
+        }
+    }
+
+Plan: 3 to add, 0 to change, 0 to destroy.
+```
+
+Use the `terraform apply` command to apply the changes. 
+```hcl
+/terraform apply                                                                              ✔  3662  17:12:20
+data.nsxt_policy_tier1_gateway.tenant1-t1-gw: Refreshing state...
+data.nsxt_policy_transport_zone.tz-overlay: Refreshing state...
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # nsxt_policy_segment.segment["1"] will be created
+  + resource "nsxt_policy_segment" "segment" {
+      + connectivity_path   = "/infra/tier-1s/tenant1-t1-gw"
+      + display_name        = "web_segment"
+      + id                  = (known after apply)
+      + nsx_id              = (known after apply)
+      + overlay_id          = (known after apply)
+      + path                = (known after apply)
+      + revision            = (known after apply)
+      + transport_zone_path = "/infra/sites/default/enforcement-points/default/transport-zones/7b4a0333-a217-40f8-8e3c-d848d8ff4fdf"
+
+      + subnet {
+          + cidr    = "10.156.1.1/24"
+          + network = (known after apply)
+        }
+    }
+
+[ ----- output omitted ----- ] 
+
+nsxt_policy_segment.segment["3"]: Creating...
+nsxt_policy_segment.segment["2"]: Creating...
+nsxt_policy_segment.segment["1"]: Creating...
+nsxt_policy_segment.segment["2"]: Creation complete after 1s [id=738942e2-ef94-4430-aafe-42088fbb8f55]
+nsxt_policy_segment.segment["1"]: Creation complete after 1s [id=58695444-e9ee-43f5-af58-a03671fe5af5]
+nsxt_policy_segment.segment["3"]: Creation complete after 1s [id=fbfbfbac-43e7-4cff-b6c8-603e577fab12]
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+```
+
+Use `terraform destroy` command to destroy the Terraform-managed infrastructure. 
+```hcl 
+./terraform destroy                                                                         
+data.nsxt_policy_tier1_gateway.tenant1-t1-gw: Refreshing state... [id=tenant1-t1-gw]
+data.nsxt_policy_transport_zone.tz-overlay: Refreshing state... [id=7b4a0333-a217-40f8-8e3c-d848d8ff4fdf]
+nsxt_policy_segment.segment["3"]: Refreshing state... [id=fbfbfbac-43e7-4cff-b6c8-603e577fab12]
+nsxt_policy_segment.segment["2"]: Refreshing state... [id=738942e2-ef94-4430-aafe-42088fbb8f55]
+nsxt_policy_segment.segment["1"]: Refreshing state... [id=58695444-e9ee-43f5-af58-a03671fe5af5]
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # nsxt_policy_segment.segment["1"] will be destroyed
+  - resource "nsxt_policy_segment" "segment" {
+      - connectivity_path   = "/infra/tier-1s/tenant1-t1-gw" -> null
+      - display_name        = "web_segment" -> null
+      - id                  = "58695444-e9ee-43f5-af58-a03671fe5af5" -> null
+      - nsx_id              = "58695444-e9ee-43f5-af58-a03671fe5af5" -> null
+      - path                = "/infra/segments/58695444-e9ee-43f5-af58-a03671fe5af5" -> null
+      - revision            = 0 -> null
+      - transport_zone_path = "/infra/sites/default/enforcement-points/default/transport-zones/7b4a0333-a217-40f8-8e3c-d848d8ff4fdf" -> null
+
+      - subnet {
+          - cidr        = "10.156.1.1/24" -> null
+          - dhcp_ranges = [] -> null
+          - network     = "10.156.1.0/24" -> null
+        }
+    }
+
+
+[ ----- output omitted ----- ]
+
+nsxt_policy_segment.segment["2"]: Destroying... [id=738942e2-ef94-4430-aafe-42088fbb8f55]
+nsxt_policy_segment.segment["1"]: Destroying... [id=58695444-e9ee-43f5-af58-a03671fe5af5]
+nsxt_policy_segment.segment["3"]: Destroying... [id=fbfbfbac-43e7-4cff-b6c8-603e577fab12]
+nsxt_policy_segment.segment["1"]: Destruction complete after 2s
+nsxt_policy_segment.segment["3"]: Destruction complete after 2s
+nsxt_policy_segment.segment["2"]: Destruction complete after 2s
+
+Destroy complete! Resources: 3 destroyed.
+```
+
 
 

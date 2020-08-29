@@ -30,7 +30,7 @@ Put the following files in the working directory
 
 #### main.tf 
 The `main.tf` file is use to define connection to NSX-T Manager. </br>
-```
+```hcl
 /* 
   Main file connecting to NSX Manager
 */
@@ -64,7 +64,7 @@ terraform {
 #### variable.tf 
 The `variable.tf` file defined the variable used.
 
-```terraform
+```hcl
 /*
    Variable definition.
    Can be define in single or separate file(s)
@@ -304,7 +304,7 @@ can't guarantee that exactly these actions will be performed if
 #### terraform apply 
 Use the `terraform apply` command to apply the changes. 
 
-```
+```terraform
 ./terraform apply  
 
 data.nsxt_policy_tier0_gateway.provider-t0-gateway: Refreshing state...
@@ -424,7 +424,7 @@ Apply complete! Resources: 5 added, 0 changed, 0 destroyed.
 #### To Delete Multiple Static Routes 
 Use `terraform show` command to inspect the current state as Terraform sees it.
 
-```
+```terraform
 ./terraform show
 
 # data.nsxt_policy_tier0_gateway.provider-t0-gateway:
@@ -518,7 +518,7 @@ resource "nsxt_policy_static_route" "staticRoute" {
 #### terraform plan -destroy 
 Use `terraform plan -destroy` command to check if the destroy changes matches your expectations without making any actual changes.
 
-```
+```terraform
 ./terraform plan -destroy                                                       
 
 Refreshing Terraform state in-memory prior to plan...
@@ -565,7 +565,7 @@ Plan: 0 to add, 0 to change, 5 to destroy.
 #### terraform destroy 
 Use `terraform destroy` command to destroy the Terraform-managed infrastructure. 
 
-```
+```terraform
 ./terraform destroy                                                             
 data.nsxt_policy_tier0_gateway.provider-t0-gateway: Refreshing state... [id=provider-t0-gateway]
 nsxt_policy_static_route.staticRoute["1"]: Refreshing state... [id=75f5171f-7ee7-483e-a308-581413e034a7]

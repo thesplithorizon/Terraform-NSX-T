@@ -2,8 +2,8 @@
 
 Here are some of the Terraform script used to automate NSX-T.</br>
 
-1. [Creation of multiple static routes using `.csv` file](#10) 
-2. [Creation of multiple logical segments using `.csv` file](#624)
+1. [Creation of multiple static routes using `.csv` file](#1-creation-of-multiple-static-routes) 
+2. [Creation of multiple logical segments using `.csv` file](#2-creation-of-multiple-logical-segments)
 
 
 
